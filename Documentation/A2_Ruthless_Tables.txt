@@ -1,0 +1,127 @@
+
+
+DROP TABLE Property CASCADE CONSTRAINTS PURGE;
+DROP TABLE Property_Listing CASCADE CONSTRAINTS PURGE;
+DROP TABLE Property_Type CASCADE CONSTRAINTS PURGE;
+DROP TABLE Feature CASCADE CONSTRAINTS PURGE;
+DROP TABLE Property_Feature CASCADE CONSTRAINTS PURGE;
+DROP TABLE Property_Image CASCADE CONSTRAINTS PURGE;
+DROP TABLE Customer CASCADE CONSTRAINTS PURGE;
+
+DROP SEQUENCE prop_seq;
+DROP SEQUENCE prop_list_seq;
+DROP SEQUENCE prop_type_seq;
+DROP SEQUENCE feature_seq;
+DROP SEQUENCE image_seq;
+DROP SEQUENCE cust_seq;
+
+CREATE SEQUENCE prop_seq;
+CREATE SEQUENCE prop_list_seq;
+CREATE SEQUENCE prop_type_seq;
+CREATE SEQUENCE feature_seq;
+CREATE SEQUENCE image_seq;
+CREATE SEQUENCE cust_seq;
+
+CREATE TABLE Property (
+  property_id INTEGER,
+  property_street VARCHAR(100) NOT NULL,
+  property_suburb VARCHAR(50) NOT NULL,
+  property_state VARCHAR(5) NOT NULL,
+  property_pc INTEGER NOT NULL,
+  property_type INTEGER,
+  CONSTRAINT PK_Property PRIMARY KEY(property_id)
+);
+
+CREATE TABLE Property_Listing (
+  pl_id INTEGER,
+  sale_date VARCHAR(10),
+  list_price INTEGER,
+  sale_price INTEGER,
+  property_id INTEGER NOT NULL,
+  seller_id INTEGER,
+  CONSTRAINT PK_Listing PRIMARY KEY(pl_id)
+);
+
+CREATE TABLE Property_Type
+(
+  type_id INTEGER,
+  type_name VARCHAR(30) NOT NULL,
+  CONSTRAINT PK_Property_Type PRIMARY KEY(type_id)
+);
+
+CREATE TABLE Feature
+(
+  feature_id INTEGER,
+  feature_name VARCHAR(30) NOT NULL,
+  CONSTRAINT PK_Feature PRIMARY KEY(feature_id)
+);
+
+CREATE TABLE Property_Feature
+(
+  property_id INTEGER,
+  feature_id INTEGER,
+  feature_description VARCHAR(100),
+  CONSTRAINT PK_Property_Feature PRIMARY KEY(property_id, feature_id)
+);
+
+CREATE TABLE Property_Image
+(
+  image_id INTEGER,
+  image_name VARCHAR(100) NOT NULL,
+  image_main CHAR(1),
+  property_id INTEGER,
+  CONSTRAINT PK_Property_Image PRIMARY KEY(image_id)
+);
+
+CREATE TABLE Customer (
+  customer_id INTEGER,
+  customer_surname VARCHAR(50) NOT NULL,
+  customer_fname VARCHAR(50) NOT NULL,
+  customer_street VARCHAR(100),
+  customer_suburb VARCHAR(50),
+  customer_state VARCHAR(5),
+  customer_pc INTEGER,
+  customer_email VARCHAR(50),
+  customer_mobile VARCHAR(12),
+  customer_mailinglist  CHAR(1),
+  CONSTRAINT PK_Customer PRIMARY KEY(customer_id)
+);
+
+-- FOREIGN KEYS
+ALTER TABLE Property
+  ADD (CONSTRAINT P_TYPE FOREIGN KEY(property_type) 
+  REFERENCES Property_Type(type_id) ON DELETE CASCADE);
+  
+ALTER TABLE Property_Listing
+  ADD (CONSTRAINT L_PROPERTY FOREIGN KEY(property_id) 
+  REFERENCES Property(property_id) ON DELETE CASCADE);
+  
+ALTER TABLE Property_Listing
+  ADD (CONSTRAINT L_CLIENT FOREIGN KEY(seller_id) 
+  REFERENCES Customer(customer_id) ON DELETE CASCADE);
+  
+ALTER TABLE Property_Feature
+  ADD (CONSTRAINT PF_PROPERTY FOREIGN KEY(property_id) 
+  REFERENCES Property(property_id) ON DELETE CASCADE);
+
+ALTER TABLE Property_Feature
+  ADD (CONSTRAINT PF_FEATURE FOREIGN KEY(feature_id) 
+  REFERENCES Feature(feature_id) ON DELETE CASCADE);
+  
+ALTER TABLE Property_Image
+  ADD (CONSTRAINT PI_PROPERTY FOREIGN KEY(property_id) 
+  REFERENCES Property(property_id) ON DELETE CASCADE);
+  
+COMMIT;
+
+CREATE OR REPLACE TRIGGER ListingInsert
+AFTER INSERT  ON Property
+FOR EACH ROW
+
+BEGIN
+  INSERT INTO Property_Listing VALUES
+  (prop_list_seq.nextval,null,0,null,:new.property_id,null);
+   
+END;
+/
+
